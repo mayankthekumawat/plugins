@@ -14,7 +14,7 @@ Thumbs.db
 .env.local
 .env.*.local
 
-# Node modules (for plugins with JS/TS)
+# Node modules (for bundled JS/TS tools)
 node_modules/
 
 # Python (for plugins with Python)
@@ -23,7 +23,7 @@ __pycache__/
 .venv/
 venv/
 
-# Local plugin settings
+# Local settings
 *.local.md
 *.local.json
 
