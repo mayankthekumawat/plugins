@@ -13,6 +13,8 @@ Companion to the `how` skill. `how` answers what the code does and how it works.
 
 Historical context spreads across seven evidence categories: source control history, issue or ticket tracking, long-form documents, real-time team chat, infrastructure observability, error or exception tracking, and product analytics warehouses. You cannot predict from the question alone which one holds the answer, so the skill enumerates available MCPs at run time, maps each to a category, queries all seven in parallel, then synthesizes with explicit confidence calibration. Null results from searched categories are first-class evidence about how the decision was made; report them alongside positive findings. The default is coverage, not minimalism.
 
+Before choosing models, read `.pstack/models.yaml` when it exists and use the `why investigators` and `why synthesizer` values. A missing file or role keeps the inline defaults.
+
 ## Operating Posture
 
 Operate as a careful, cautious, precise investigator. Think like a detective piecing together a historical case from fragmentary records. When the record is thin, say so.
@@ -56,7 +58,7 @@ Parse what the user is asking. The **target** is usually a chunk of code, a patt
 - "Why does this code still exist?" Dead-code territory.
 - "What's the history of X?" Broad archaeological sweep.
 
-If the target is vague ("why do we do it this way?" with no clear referent), make your best guess from conversation context (open files, recent edits, cursor location, what was just discussed). State your interpretation briefly so the user can redirect if you're off, then proceed.
+If the target is vague ("why do we do it this way?" with no clear referent), make your best guess from conversation context (open files, recent edits, current selection, what was just discussed). State your interpretation briefly so the user can redirect if you're off, then proceed.
 
 ## Step 2. Establish the Code Anchor
 
@@ -97,7 +99,7 @@ Capture this as seed context (file paths, symbols, commits, PR numbers, linked t
 
 ### Discovery
 
-Before spawning investigators, list the available MCPs from the Cursor environment. Use the available-tools map when present. Otherwise inspect the `mcps/` directory Cursor exposes for enabled MCP servers.
+Before spawning investigators, list the tools, connectors, and MCPs available in the runtime. Use the available-tools map when present. Otherwise inspect whatever tool, server, or resource list the runtime exposes. If it exposes no discovery surface, use only tools already available in the session and mark undiscoverable categories as gaps.
 
 Map each available MCP to one evidence category:
 
@@ -109,16 +111,17 @@ Map each available MCP to one evidence category:
 6. Error / exception tracking
 7. Product analytics warehouse
 
-Source control is always available through git and `gh`. For the other six, classify using the MCP name, server instructions, tool names, and resource descriptors. If an MCP could fit more than one category, choose the one matching its primary evidence. Record ambiguous cases in the coverage map.
+Source control is available when the workspace exposes Git; hosted PR and review history additionally needs a provider CLI or connector. For the other six, classify using connector names, server instructions, tool names, and resource descriptors. If a connector could fit more than one category, choose the one matching its primary evidence. Record ambiguous cases in the coverage map.
 
 Aim for a complete **coverage map**, not a minimal one. A null result from an issue tracker is evidence the decision was not ticketed, a useful fact in itself. Document the null, don't skip the search.
 
 Launch all matching investigators in a single message so they run concurrently. One investigator per category lets each specialize in one tool's query vocabulary and result shape. Don't ask one agent to cover multiple MCPs.
 
+If the runtime has no subagent capability, run the same investigator briefs as separate labeled passes in the parent. If it cannot run them concurrently, run them sequentially. Preserve the coverage map and null results.
+
 Subagent config (each):
-- `subagent_type`: `generalPurpose`
-- `model`: your configured why-investigators model (default `grok-4.6-fast-xhigh`)
-- `readonly`: `false` (agent mode). **Do not use readonly/Ask mode.** It strips MCP access, which disables MCP-backed investigators entirely. The source control investigator would be safe in readonly, but keep modes uniform. Investigators still shouldn't write anything. That's a posture, not a sandbox.
+
+Use a generic subagent and your configured why-investigators model when the runtime supports model overrides. Omit the override for `inherit-parent` or `auto`. Use an execution mode that preserves MCP or connector access. **Do not use read-only mode when it strips that access.** The source control investigator would be safe in read-only mode, but keep modes uniform. Investigators still shouldn't write anything. That's a posture, not a sandbox.
 
 Each investigator gets:
 1. The base prompt from `references/investigator-prompt.md`
@@ -162,9 +165,9 @@ If your scope assessment suggests a single-commit trivial target where the PR de
 
 Spawn one synthesizer subagent:
 
-- `subagent_type`: `generalPurpose`
-- `model`: your configured why-synthesizer model (default `claude-fable-5-thinking-max`)
-- `readonly`: `false` (agent mode). The synthesizer's quality check spot-verifies citations, which can require MCP access. Readonly/Ask mode strips MCPs and defeats that.
+If the runtime has no subagent capability, run the synthesizer prompt as a separate parent pass after all investigator passes.
+
+Use a generic subagent and your configured why-synthesizer model when the runtime supports model overrides. Omit the override for `inherit-parent` or `auto`. Use an execution mode that preserves MCP or connector access. The synthesizer's quality check spot-verifies citations, and read-only mode may strip that access.
 
 The synthesizer gets:
 1. The investigator findings, including any null results and any categories skipped with justification
