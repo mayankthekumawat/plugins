@@ -7,6 +7,8 @@ description: "Use for \"how does X work\", code walkthroughs before changing som
 
 Explore the codebase to answer "how does X work?" questions. Produce clear architectural explanations at the level of a senior engineer onboarding onto a subsystem. Enough to build a working mental model, not annotated source code.
 
+Before choosing models, read `.pstack/models.yaml` when it exists and use the `how explorer`, `how explainer`, and `how critics` values. A missing file or role keeps the inline defaults.
+
 Two modes:
 
 1. **Explain** (default). Explore the codebase and produce a clear explanation
@@ -32,6 +34,8 @@ Identify the scope. If ambiguous, state your best-guess interpretation before ex
 
 When in doubt, lean simple. You can always spawn explorers if the explainer hits a wall.
 
+If the runtime has no subagent capability, perform each explorer, explainer, critic, and synthesis role as a separate labeled pass in the parent. Preserve the prompts and ordering; only the execution mechanism changes.
+
 ### Step 2a. Explore (complex questions only)
 
 Decompose the question into 2-4 parallel exploration angles, each a distinct slice of the subsystem so explorers don't duplicate work. Example split for "how does the rate limiter work?":
@@ -44,9 +48,7 @@ The right decomposition depends on the question. Use your judgment. Narrow quest
 
 Spawn all explorers in a single message:
 
-- `subagent_type`: `generalPurpose`
-- `model`: your configured how-explorer model (default `grok-4.6-fast-xhigh`)
-- `readonly`: `true`
+Use generic subagents and your configured how-explorer model when the runtime supports model overrides. Omit the override for `inherit-parent` or `auto`. Use a read-only mode when the runtime supports one; otherwise explicitly forbid writes in the explorer prompt.
 
 Each explorer gets the same base prompt from `references/explorer-prompt.md` plus a specific exploration angle naming its slice. Each explorer should:
 - Start broad: Glob for relevant directories, Grep for key types/interfaces/class names
@@ -61,11 +63,9 @@ Then proceed to Step 3.
 
 ### Step 2b. Direct Explain (simple questions)
 
-Spawn a single Task subagent that explores and explains in one pass:
+Spawn a single delegated subagent that explores and explains in one pass:
 
-- `subagent_type`: `generalPurpose`
-- `model`: your configured how-explainer model (default `claude-fable-5-thinking-max`)
-- `readonly`: `true`
+Use a generic subagent and your configured how-explainer model when the runtime supports model overrides. Omit the override for `inherit-parent` or `auto`. Use a read-only mode when the runtime supports one; otherwise explicitly forbid writes in the prompt.
 
 The agent does its own exploration (Glob, Grep, Read) and writes the explanation directly. Read `references/explainer-prompt.md` for the communication style and output format. Same structure, just no explorer findings as input.
 
@@ -73,11 +73,9 @@ Proceed to Step 4.
 
 ### Step 3. Synthesize (complex questions only)
 
-Once all explorers return, spawn a single Task subagent to synthesize their findings into one coherent explanation:
+Once all explorers return, spawn a single delegated subagent to synthesize their findings into one coherent explanation:
 
-- `subagent_type`: `generalPurpose`
-- `model`: your configured how-explainer model (default `claude-fable-5-thinking-max`)
-- `readonly`: `true`
+Use a generic subagent and your configured how-explainer model when the runtime supports model overrides. Omit the override for `inherit-parent` or `auto`. Use a read-only mode when the runtime supports one; otherwise explicitly forbid writes in the prompt.
 
 The explainer gets all explorers' findings and writes the human-facing explanation (output format below). Read `references/explainer-prompt.md` for the full prompt template. The explainer reconciles overlapping findings, resolves contradictions, and weaves the slices into a unified picture.
 
@@ -109,12 +107,11 @@ Run the full explain flow above (Steps 1-4). You must understand the architectur
 
 ### Step 2. Spawn Critics
 
-After the explanation is complete, spawn one architectural critic per model in your configured how-critics list (defaults `claude-fable-5-thinking-max`, `gpt-5.6-sol-max`, `grok-4.6-fast-xhigh`, `claude-opus-5-thinking-xhigh`), all in a single message.
+After the explanation is complete, spawn one architectural critic per model in your configured how-critics list (defaults `inherit-parent`, `inherit-parent`, `inherit-parent`, `inherit-parent`), all in a single message.
 
 For each critic:
-- `subagent_type`: `generalPurpose`
-- `model`: one model from the configured how-critics list. These are minimum reasoning levels. The lead should escalate any model when the architecture warrants deeper analysis.
-- `readonly`: `true`
+
+Use a generic subagent and one model from the configured how-critics list when the runtime supports model overrides. Omit the override for `inherit-parent` or `auto`. These are minimum reasoning levels. The lead should escalate any model when the architecture warrants deeper analysis. Use a read-only mode when the runtime supports one; otherwise explicitly forbid writes in the critic prompt.
 
 Read `references/critic-prompt.md` for the prompt template. Each critic gets:
 1. The explanation from Step 1 (so they don't re-explore)

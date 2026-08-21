@@ -16,7 +16,7 @@ Read the **Principles** section of the `poteto-mode` skill end to end, and the l
 
 ## 2. Scope and constraints
 
-State your read of scope and constraints in one paragraph. Use `AskQuestion` only for genuinely ambiguous intent (the **never-block-on-the-human** principle skill); give concrete options with each open question.
+State your read of scope and constraints in one paragraph. Use the runtime's user-input mechanism only for genuinely ambiguous intent (the **never-block-on-the-human** principle skill); give concrete options with each open question.
 
 Resolve what is in scope vs explicitly out, technical or platform constraints, patterns to preserve, and the definition of done.
 
@@ -24,8 +24,8 @@ Resolve what is in scope vs explicitly out, technical or platform constraints, p
 
 Delegate codebase exploration (the **guard-the-context-window** principle skill).
 
-- Prefer `subagent_type: "poteto-agent"`. `generalPurpose` is the fallback. Never use the built-in `plan` subagent_type; it ignores this skill.
-- Pass `model:` explicitly per the configured roles (defaults `grok-4.6-fast-xhigh` for code, `claude-fable-5-thinking-max` for judgment).
+- Prefer a generic subagent instructed to use the `poteto-mode` skill. An uninstructed generic subagent is the fallback. Do not use a planning-only agent role that ignores this skill.
+- Use the configured role model when the runtime supports model overrides. Omit the override for `inherit-parent` or `auto`.
 
 Each explorer returns file pointers, conventions, dependencies, test infrastructure, and entry points. No inlined dumps.
 
@@ -73,7 +73,7 @@ Order phases so infrastructure and shared types land first (the **foundational-t
 
 For changes touching existing code, apply the **redesign-from-first-principles** principle skill: if we'd built this with the new requirement on day one, what would it look like? Redesign holistically; deliver incrementally.
 
-If a phase creates or edits a skill, the phase instructs the implementer to use the **create-skill** skill (Cursor's built-in for authoring SKILL.md files).
+If a phase creates or edits a skill, the phase instructs the implementer to use the runtime's skill-authoring capability.
 
 ## 5. Verification per phase
 
@@ -83,8 +83,8 @@ Each phase needs both:
 
 **Runtime.** Exercise the feature on the matching surface via the relevant control skill:
 
-- Browser / Electron / Web UIs: the `control-ui` skill from the `cursor-team-kit` plugin.
-- CLIs and TUIs: the `control-cli` skill from the `cursor-team-kit` plugin.
+- Browser / Electron / Web UIs: an available browser or UI control capability.
+- CLIs and TUIs: an available CLI control capability.
 - Native mobile: whatever simulator-driving skill your team has.
 - No control skill for the touched surface: flag it in the plan.
 
@@ -96,9 +96,9 @@ In the overview, name which poteto-mode non-negotiables the implementer must app
 
 - the **how** skill over each unfamiliar subsystem before changing it.
 - the **interrogate** skill for adversarial review on contested designs before shipping.
-- `/deslop` over each diff before commit. the **unslop** skill over any prose surface.
+- An available deslop or code-cleanup capability over each diff before commit. The **unslop** skill over any prose surface.
 - the **show-me-your-work** skill to keep a decision trail when the plan is large enough to need an auditable record.
-- Cursor's built-in **babysit** skill after opening the PR.
+- The **Babysit** playbook after opening the PR.
 
 ## 7. Hand back
 
