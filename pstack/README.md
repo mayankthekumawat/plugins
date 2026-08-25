@@ -1,5 +1,8 @@
 # pstack
 
+> [!NOTE]
+> This directory is mstack's runtime-neutral modification of the [original pstack](https://github.com/cursor/plugins/tree/main/pstack), created by [poteto](https://x.com/poteto). The original principles, playbooks, prompts, and voice remain intact. [Mayank Kumawat](https://github.com/mayankthekumawat) modified the runtime-specific interfaces and maintains this copy as part of [mstack](../README.md).
+
 i'm [poteto](https://x.com/poteto). i'm not a president or ceo, but i've worked with millions of lines of code at Meta and Netflix. i'm also on the react core team where i help build and maintain react compiler.
 
 there's a growing sense that ai writes too much slop code. i agree. i don't want to ship like a team of twenty slop artists. throughput without quality is not a goal i aspire to. if you want to go fast, go deep first. 
@@ -251,4 +254,4 @@ The generic skills do not depend on the automation pack.
 
 ## license
 
-MIT
+[pstack](https://github.com/cursor/plugins/tree/main/pstack) was created by [poteto](https://x.com/poteto) and is distributed under the [MIT license](./LICENSE). The runtime-neutral modifications in this repository are by [Mayank Kumawat](https://github.com/mayankthekumawat).
